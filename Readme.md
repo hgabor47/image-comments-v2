@@ -111,4 +111,4 @@ Eclipse Public License v1.0. See [license text](http://github.com/lukesdm/image-
 
 ## Authors & Contributors
 
-Luke McQuade (creator), Thomas Pollak, Lionsoft, Oleg Kosmakov, Morten Engelhardt Olsen, Wolfgang Kleinschmit, Sören Nils Kuklau, Tim Long, [your name here]
+Luke McQuade (creator), Thomas Pollak, Lionsoft, Oleg Kosmakov, Morten Engelhardt Olsen, Wolfgang Kleinschmit, Sören Nils Kuklau, Tim Long, Gabor Horvath [your name here]
