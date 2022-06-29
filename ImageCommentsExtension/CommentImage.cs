@@ -16,6 +16,7 @@ namespace LM.ImageComments.EditorComponent
         public double Opacity;
         public Color Background;
         private const double Tolerance = 0.001;
+        public string content;
 
         public ImageAttributes()
         {
@@ -54,6 +55,7 @@ namespace LM.ImageComments.EditorComponent
             _variableExpander = variableExpander ?? throw new ArgumentNullException(nameof(variableExpander));
             this.VisualBitmapScalingMode = BitmapScalingMode.HighQuality;
         }
+
 
         private bool LoadFromUri(string rawUri, string sourceFileDir, Action refreshAction, out string errorString)
         {

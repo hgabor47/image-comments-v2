@@ -7,16 +7,21 @@
     using Microsoft.VisualStudio.Text;
     using System.Diagnostics;
 
+    //https://docs.microsoft.com/hu-hu/previous-versions/visualstudio/visual-studio-2015/extensibility/language-service-and-editor-extension-points?view=vs-2015&redirectedfrom=MSDN
     [Export(typeof(IViewTaggerProvider))]
     [
+        //ContentType("Any"),
         ContentType("CSharp"),
         ContentType("C/C++"),
         ContentType("Basic"),
         ContentType("code++.F#"),
         ContentType("F#"),
         ContentType("JScript"),
-        ContentType("Python")
+        ContentType("Python"),
+        ContentType("XML"),
+        ContentType("SQL Server Tools")
     ]
+
     [TagType(typeof(ErrorTag))]
     internal class ErrorTaggerProvider : IViewTaggerProvider
     {

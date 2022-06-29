@@ -64,6 +64,7 @@ namespace LM.ImageComments.EditorComponent
         private void contentTypeChangedHandler(object sender, ContentTypeChangedEventArgs e)
         {
             _contentTypeName = e.AfterContentType.TypeName;
+            System.IO.File.AppendAllText("C:\\tmp\\imagecomment.log", "\nType: "+_contentTypeName);
         }
 
         /// <summary>

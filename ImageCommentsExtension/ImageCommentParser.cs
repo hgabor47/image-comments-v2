@@ -6,6 +6,7 @@ namespace LM.ImageComments.EditorComponent
     using System.Globalization;
     using System.Text.RegularExpressions;
     using System.Xml.Linq;
+    using System.Diagnostics;
 
     // TODO [?]: Could make this a non-static class and use instances, but ensure a new instance is created when content type of a view is changed.
     internal static class ImageCommentParser
@@ -17,6 +18,10 @@ namespace LM.ImageComments.EditorComponent
         private static readonly Regex PythonImageCommentRegex;
         private static readonly Regex PythonIndentRegex;
         private static readonly Regex XmlImageTagRegex;
+        private static readonly Regex SQLIndentRegex;
+        private static readonly Regex SQLImageCommentRegex;
+        private static readonly Regex XMLIndentRegex;
+        private static readonly Regex XMLImageCommentRegex;
 
         // Initialize regex objects
         static ImageCommentParser()
@@ -42,15 +47,33 @@ namespace LM.ImageComments.EditorComponent
             const string pythonCommentPattern = @"#.*";
             PythonImageCommentRegex = new Regex(pythonCommentPattern + xmlImageTagPattern, RegexOptions.Compiled);
 
+            //Sql
+            const string SQLIndent = @"--\s+";
+            SQLIndentRegex = new Regex(SQLIndent, RegexOptions.Compiled);
+            const string SQLCommentPattern = @"--.*";
+            SQLImageCommentRegex = new Regex(SQLCommentPattern + xmlImageTagPattern, RegexOptions.Compiled);
+
+            //XML
+            const string XMLIndent = @"<!--\s+";
+            XMLIndentRegex = new Regex(XMLIndent, RegexOptions.Compiled);
+            const string XMLCommentPattern = @"<!--.*";
+            XMLImageCommentRegex = new Regex(XMLCommentPattern + xmlImageTagPattern, RegexOptions.Compiled);
+
+
+
             XmlImageTagRegex = new Regex(xmlImageTagPattern, RegexOptions.Compiled);
         }
 
         /// <summary>
         /// Tries to match Regex on input text
         /// </summary>
+        /// <img src="c:/a/logo.png" />
         /// <returns>Position in line at start of matched image comment. -1 if not matched</returns>
         public static int Match(string contentTypeName, string lineText, out string matchedText)
         {
+            System.IO.File.AppendAllText("C:\\tmp\\imagecomment.log", contentTypeName);
+            Debug.WriteLine("Unsupported content type: " + contentTypeName);
+
             Match commentMatch;
             Match indentMatch;
             switch(contentTypeName)
@@ -63,6 +86,14 @@ namespace LM.ImageComments.EditorComponent
                     commentMatch = CsharpImageCommentRegex.Match(lineText);
                     indentMatch = CsharpIndentRegex.Match(lineText);
                     break;
+                case "SQL Server Tools":
+                    commentMatch = SQLImageCommentRegex.Match(lineText);
+                    indentMatch = SQLIndentRegex.Match(lineText);
+                    break;
+                case "XML":
+                    commentMatch = XMLImageCommentRegex.Match(lineText);
+                    indentMatch = XMLIndentRegex.Match(lineText);
+                    break;
                 case "Basic":
                     commentMatch = VbImageCommentRegex.Match(lineText);
                     indentMatch = VbIndentRegex.Match(lineText);
@@ -73,7 +104,7 @@ namespace LM.ImageComments.EditorComponent
                     break;
                 //TODO: Add support for more languages
                 default:
-                    //Console.WriteLine("Unsupported content type: " + contentTypeName);
+                    //Debug.WriteLine("Unsupported content type: " + contentTypeName);
                     matchedText = "";
                     return -1;
             }
