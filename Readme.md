@@ -9,7 +9,8 @@ This is an extension for the Visual Studio code editor that allows images to be 
 
 ## News
 
-As of writing, this repo was still getting occasional interest, despite several years of inactivity. As there are now several alternatives offering more, I'll probably archive this project. Feel free to report new issues if the alternative's aren't an option for you, but I don't plan to develop any new features for it.
+* Visual Studio 2022 support
+* SQL and XML file support
 
 
 ## Alternatives
@@ -23,7 +24,7 @@ As of writing, this repo was still getting occasional interest, despite several 
 
 ### Supported Versions
 
-Visual Studio 2019 (though earlier releases support 2010~2017).  
+Visual Studio 2022 (though earlier releases support 2010~2019).  
 
 
 ### Download/Installation
@@ -110,4 +111,4 @@ Eclipse Public License v1.0. See [license text](http://github.com/lukesdm/image-
 
 ## Authors & Contributors
 
-Luke McQuade (creator), Thomas Pollak, Lionsoft, Oleg Kosmakov, Morten Engelhardt Olsen, Wolfgang Kleinschmit, Sören Nils Kuklau, Tim Long, [your name here]
+Luke McQuade (creator), Thomas Pollak, Lionsoft, Oleg Kosmakov, Morten Engelhardt Olsen, Wolfgang Kleinschmit, Sören Nils Kuklau, Tim Long, Gabor Horvath [your name here]
