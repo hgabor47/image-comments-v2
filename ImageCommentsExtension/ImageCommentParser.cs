@@ -71,8 +71,8 @@ namespace LM.ImageComments.EditorComponent
         /// <returns>Position in line at start of matched image comment. -1 if not matched</returns>
         public static int Match(string contentTypeName, string lineText, out string matchedText)
         {
-            System.IO.File.AppendAllText("C:\\tmp\\imagecomment.log", contentTypeName);
-            Debug.WriteLine("Unsupported content type: " + contentTypeName);
+            //System.IO.File.AppendAllText("C:\\tmp\\imagecomment.log", contentTypeName);
+            //Debug.WriteLine("Unsupported content type: " + contentTypeName);
 
             Match commentMatch;
             Match indentMatch;
