@@ -4,9 +4,9 @@
         <Identity Id="ImageComments.2980fb0d-ba9d-4373-9178-d27a98f0c9b1" Version="1.2.0.0" Language="en-US" Publisher="Luke McQuade, Lionsoft, Oleg K, Thomas P, Mark L." />
         <DisplayName>ImageComments</DisplayName>
 
-        <Description xml:space="preserve">Use images in code comments within Python, C#, C, C++, F#, DocFX and VB source files.
-Written by Luke McQuade. Contributions by Lionsoft, Oleg K, Thomas P, Mark L.
-(This fork published by Thomas Pollak)</Description>
+        <Description xml:space="preserve">Use images in code comments within Python, C#, C, C++, F#, DocFX, SQL, XML and VB source files.
+Written by Luke McQuade. Contributions by Lionsoft, Oleg K, Thomas P, Mark L., Gabor H.
+(This fork published by Gabor Horvath)</Description>
         <MoreInfo>https://github.com/TomSmartBishop/image-comments</MoreInfo>
         <License>License.txt</License>
         <Icon>img_cmt.png</Icon>

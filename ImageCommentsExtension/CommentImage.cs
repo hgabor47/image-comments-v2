@@ -17,12 +17,20 @@ namespace LM.ImageComments.EditorComponent
         public Color Background;
         private const double Tolerance = 0.001;
         public string content;
+        public string Name;
+        
+        public double Volume;
+        public double Start;
 
         public ImageAttributes()
         {
+            Name = "img";
             Url = "";
             Scale = 1.0;
             Opacity = 1.0;
+            Volume = 0.7;
+            Start = 0;
+
         }
 
         public bool IsEqual(object obj)
@@ -36,7 +44,28 @@ namespace LM.ImageComments.EditorComponent
                    Math.Abs(other.Opacity - Opacity) < Tolerance &&
                    other.Background.Equals(Background);
         }
+        public bool IsEqualAudio(object obj)
+        {
+            if (obj == null)
+                return false;
+            if (!(obj is ImageAttributes other))
+                return false;
+            return other.Volume== Volume &&                   
+                   other.Start == Start;
+        }
+
+        public ImageAttributes clone()
+        {
+            var orig = this;
+            var a = new ImageAttributes();
+            a.Url= orig.Url;
+            a.Volume = orig.Volume;
+            a.Start= orig.Start;
+            return a;
+        }
     }
+
+    
 
     /// <summary>
     /// Sub-class of Image with convenient URL-based Source changing

@@ -7,7 +7,7 @@ namespace LM.ImageComments.EditorComponent
     using System.Text.RegularExpressions;
     using System.Xml.Linq;
     using System.Diagnostics;
-
+    /// <sound src="c:/a/hangmp3.mp3" start="167.3" volume="0.2" />
     // TODO [?]: Could make this a non-static class and use instances, but ensure a new instance is created when content type of a view is changed.
     internal static class ImageCommentParser
     {
@@ -27,7 +27,7 @@ namespace LM.ImageComments.EditorComponent
         static ImageCommentParser()
         {
             // alternate Regex "image" for use with docfx
-            const string xmlImageTagPattern = @"<img.*>|<image.*>";
+            const string xmlImageTagPattern = @"<img.*>|<image.*>|<sound.*>|<snd.*>";
 
             // C/C++/C#
             const string cSharpIndent = @"//\s+";
@@ -126,7 +126,7 @@ namespace LM.ImageComments.EditorComponent
         public static bool TryParse(string matchedText, out ImageAttributes imageData, out string parsingError)
         {
             imageData = new ImageAttributes();
-
+            if (ImageAdornmentManager.test)  System.IO.File.AppendAllText("C:\\tmp\\imagecomment.log", "\nmatchedText:" + matchedText);
             // Try parse text
             if (matchedText != "")
             {
@@ -134,74 +134,104 @@ namespace LM.ImageComments.EditorComponent
                 try
                 {
                     XElement imgEl = XElement.Parse(tagText);
-                    XAttribute srcAttr = imgEl.Attribute("src");
-
-                    // alternate Attribute name "url" used by docfx
-                    if (srcAttr == null)
+                    if (imgEl.Name == "img" || imgEl.Name == "image")
                     {
-                        srcAttr = imgEl.Attribute("url");
-                    }
-                    if (srcAttr == null)
-                    {
-                        parsingError = "src (or url) attribute not specified.";
-                        return false;
-                    }
-                    imageData.Url = srcAttr.Value;
-
-                    //scale
-                    XAttribute scaleAttr = imgEl.Attribute("scale");
-                    if (scaleAttr != null)
-                    {
-                        double.TryParse(scaleAttr.Value, NumberStyles.Float, CultureInfo.InvariantCulture, out imageData.Scale);
-                    }
-
-                    //opacity
-                    XAttribute opacityAttr = imgEl.Attribute("opacity");
-                    if (opacityAttr != null)
-                    {
-                        double.TryParse(opacityAttr.Value, NumberStyles.Float, CultureInfo.InvariantCulture, out imageData.Opacity);
-                    }
-
-                    //background color
-                    XAttribute bgColorAttr = imgEl.Attribute("bgcolor");
-                    if (bgColorAttr != null)
-                    {
-                        var colorString = bgColorAttr.Value.Replace("#", "").Replace("0x", "");
-
-                        //expand short hand color format
-                        if (colorString.Length == 3)
+                        
+                        XAttribute srcAttr = imgEl.Attribute("src");
+                        // alternate Attribute name "url" used by docfx
+                        if (srcAttr == null)
                         {
-                            colorString = String.Format("{0}{0}{1}{1}{2}{2}",
-                                colorString[0], colorString[1], colorString[2]);
+                            srcAttr = imgEl.Attribute("url");
+                        }
+                        if (srcAttr == null)
+                        {
+                            parsingError = "src (or url) attribute not specified.";
+                            return false;
+                        }
+                        imageData.Url = srcAttr.Value;
+
+                        //scale
+                        XAttribute scaleAttr = imgEl.Attribute("scale");
+                        if (scaleAttr != null)
+                        {
+                            double.TryParse(scaleAttr.Value, NumberStyles.Float, CultureInfo.InvariantCulture, out imageData.Scale);
                         }
 
-                        if ((colorString.Length == 6 || colorString.Length == 8) &&
-                            UInt32.TryParse(colorString, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var color) )
+                        //opacity
+                        XAttribute opacityAttr = imgEl.Attribute("opacity");
+                        if (opacityAttr != null)
                         {
-                            if (colorString.Length == 6)
-                            {
-                                imageData.Background.A = 255;
-                                imageData.Background.B = (byte)color;
-                                imageData.Background.G = (byte)(color >> 8);
-                                imageData.Background.R = (byte)(color >> 16);
-                            }
-                            else
-                            {
-                                imageData.Background.A = (byte)color;
-                                imageData.Background.B = (byte)(color >> 8);
-                                imageData.Background.G = (byte)(color >> 16);
-                                imageData.Background.R = (byte)(color >> 24);
-                            }
-
+                            double.TryParse(opacityAttr.Value, NumberStyles.Float, CultureInfo.InvariantCulture, out imageData.Opacity);
                         }
-                    }
-                    else
-                    {
-                        imageData.Background.A = 0;
-                    }
 
-                    parsingError = null;
-                    return true;
+                        //background color
+                        XAttribute bgColorAttr = imgEl.Attribute("bgcolor");
+                        if (bgColorAttr != null)
+                        {
+                            var colorString = bgColorAttr.Value.Replace("#", "").Replace("0x", "");
+
+                            //expand short hand color format
+                            if (colorString.Length == 3)
+                            {
+                                colorString = String.Format("{0}{0}{1}{1}{2}{2}",
+                                    colorString[0], colorString[1], colorString[2]);
+                            }
+
+                            if ((colorString.Length == 6 || colorString.Length == 8) &&
+                                UInt32.TryParse(colorString, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var color))
+                            {
+                                if (colorString.Length == 6)
+                                {
+                                    imageData.Background.A = 255;
+                                    imageData.Background.B = (byte)color;
+                                    imageData.Background.G = (byte)(color >> 8);
+                                    imageData.Background.R = (byte)(color >> 16);
+                                }
+                                else
+                                {
+                                    imageData.Background.A = (byte)color;
+                                    imageData.Background.B = (byte)(color >> 8);
+                                    imageData.Background.G = (byte)(color >> 16);
+                                    imageData.Background.R = (byte)(color >> 24);
+                                }
+
+                            }
+                        }
+                        else
+                        {
+                            imageData.Background.A = 0;
+                        }
+
+                        parsingError = null;
+                        return true;
+                    }
+                    if (imgEl.Name == "snd" || imgEl.Name == "sound")
+                    {
+                        imageData.Name = "sound";
+                        XAttribute srcAttr = imgEl.Attribute("src");
+                        if (srcAttr == null)
+                        {
+                            srcAttr = imgEl.Attribute("url");
+                        }
+                        if (srcAttr == null)
+                        {
+                            parsingError = "src (or url) attribute not specified.";
+                            return false;
+                        }
+                        imageData.Url = srcAttr.Value;
+                        XAttribute volAttr = imgEl.Attribute("volume");
+                        if (volAttr != null)
+                        {
+                            double.TryParse(volAttr.Value, NumberStyles.Float, CultureInfo.InvariantCulture, out imageData.Volume);
+                        }
+                        XAttribute startAttr = imgEl.Attribute("start");
+                        if (volAttr != null)
+                        {
+                            double.TryParse(startAttr.Value, NumberStyles.Float, CultureInfo.InvariantCulture, out imageData.Start);
+                        }
+                        parsingError = null;
+                        return true;
+                    }
                 }
                 catch (Exception ex)
                 {

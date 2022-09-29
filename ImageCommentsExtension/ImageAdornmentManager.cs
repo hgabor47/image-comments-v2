@@ -10,11 +10,17 @@ namespace LM.ImageComments.EditorComponent
     using Microsoft.VisualStudio.Text.Formatting;
     using Microsoft.VisualStudio.Text.Tagging;
 
+    /// <sound src="c:/a/hangmp3.mp3" start="167.3" volume="0.6" />
+
     /// <summary>
     /// Important class. Handles creation of image adornments on appropriate lines and associated error tags.
     /// </summary>
     public class ImageAdornmentManager : ITagger<ErrorTag>, IDisposable
     {
+        private static System.Windows.Media.MediaPlayer soundPlayer;
+        private static ImageAttributes soundPlayerData;
+        public static bool test = false;
+
         private readonly IAdornmentLayer _layer;
         private readonly IWpfTextView _view;
         private readonly VariableExpander _variableExpander;
@@ -64,7 +70,7 @@ namespace LM.ImageComments.EditorComponent
         private void contentTypeChangedHandler(object sender, ContentTypeChangedEventArgs e)
         {
             _contentTypeName = e.AfterContentType.TypeName;
-            System.IO.File.AppendAllText("C:\\tmp\\imagecomment.log", "\nType: "+_contentTypeName);
+            //System.IO.File.AppendAllText("C:\\tmp\\imagecomment.log", "\nType: "+_contentTypeName);
         }
 
         /// <summary>
@@ -76,6 +82,8 @@ namespace LM.ImageComments.EditorComponent
 
             if (!Enabled)
                 return;
+            
+            //System.IO.File.AppendAllText("C:\\tmp\\imagecomment.log", "\nLayoutChangedHandler" );            
 
             _errorTags.Clear();
             TagsChanged?.Invoke(this, new SnapshotSpanEventArgs(new SnapshotSpan(_view.TextSnapshot, new Span(0, _view.TextSnapshot.Length))));
@@ -125,11 +133,13 @@ namespace LM.ImageComments.EditorComponent
             var matchIndex = ImageCommentParser.Match(_contentTypeName, lineText, out var matchedText);
             if (matchIndex >= 0)
             {
+
                 //lineText = line.Extent.GetText().Split(new string[] { "\r\n", "\r" }, StringSplitOptions.None)[0];
                 // Get coordinates of text
                 var start = line.Extent.Start.Position + matchIndex;
                 var end = line.Start + (line.Extent.Length - 1);
                 var span = new SnapshotSpan(_view.TextSnapshot, Span.FromBounds(start, end));
+                
 
                 ImageCommentParser.TryParse(matchedText, out var parsedImgData, out var parsingError);
 
@@ -148,59 +158,124 @@ namespace LM.ImageComments.EditorComponent
                 }
 
                 string loadingMessage = null;
-                
-                // Check for and update existing image
-                CommentImage image = Images.ContainsKey(lineNumber) ? Images[lineNumber] : null;
-                if (image != null)
+                if (parsedImgData.Name == "img" || parsedImgData.Name == "image")
                 {
-                    if (!image.Attributes.IsEqual(parsedImgData))
+                    if (test) System.IO.File.AppendAllText("C:\\tmp\\imagecomment.log", "\nIMG:" + parsedImgData.Url);
+                    // Check for and update existing image
+                    CommentImage image = Images.ContainsKey(lineNumber) ? Images[lineNumber] : null;
+                    if (image != null)
                     {
+                        if (!image.Attributes.IsEqual(parsedImgData))
+                        {
+                            if (test) System.IO.File.AppendAllText("C:\\tmp\\imagecomment.log", "\nEXISTS:");
+                            image.TrySet(directory, parsedImgData, out loadingMessage, () => CreateVisuals(line, lineNumber, absFilename));
+                            if (test) System.IO.File.AppendAllText("C:\\tmp\\imagecomment.log", "\nEXISTSEND:");
+                        }
+                    }
+                    else // No existing image, so create new one
+                    {
+                        if (test) System.IO.File.AppendAllText("C:\\tmp\\imagecomment.log", "\nADD:");
+                        image = new CommentImage(_variableExpander);
                         image.TrySet(directory, parsedImgData, out loadingMessage, () => CreateVisuals(line, lineNumber, absFilename));
-                    }
-                }
-                else // No existing image, so create new one
-                {
-                    image = new CommentImage(_variableExpander);
-                    image.TrySet(directory, parsedImgData, out loadingMessage, () => CreateVisuals(line, lineNumber, absFilename));
-                    Images.Add(lineNumber, image);
-                }
-
-                // Position image and add as adornment
-                if (loadingMessage == null && image.Source!= null)
-                {
-                    
-                    var geometry = _view.TextViewLines.GetMarkerGeometry(span);
-                    if (geometry == null) // Exceptional case when image dimensions are massive (e.g. specifying very large scale factor)
-                    {
-                        throw new InvalidOperationException("Couldn't get source code line geometry. Is the loaded image massive?");
-                    }
-                    var textLeft = geometry.Bounds.Left;
-                    var textBottom = line.TextBottom;
-                    Canvas.SetLeft(image, textLeft);
-                    Canvas.SetTop(image, textBottom);
-
-                    // Add image to editor view
-                    try
-                    {
-                        _layer.RemoveAdornment(image);
-                        _layer.AddAdornment(AdornmentPositioningBehavior.TextRelative, line.Extent, null, image, null);
-                    }
-                    catch (Exception ex)
-                    {
-                        // No expected exceptions, so tell user something is wrong.
-                        ExceptionHandler.Notify(ex, true);
-                    }
-                }
-                else
-                {
-                    if (Images.ContainsKey(lineNumber))
-                    {
-                        Images.Remove(lineNumber);
+                        Images.Add(lineNumber, image);
+                        if (test) System.IO.File.AppendAllText("C:\\tmp\\imagecomment.log", "\nADDEND:");
                     }
 
-                    _errorTags.Add(new TagSpan<ErrorTag>(span, loadingMessage == null ?
-                        new ErrorTag("No image set", "No image set") :
-                        new ErrorTag("Trouble loading image", loadingMessage)));
+                    // Position image and add as adornment
+                    if (loadingMessage == null && image.Source != null)
+                    {
+
+                        var geometry = _view.TextViewLines.GetMarkerGeometry(span);
+                        if (geometry == null) // Exceptional case when image dimensions are massive (e.g. specifying very large scale factor)
+                        {
+                            throw new InvalidOperationException("Couldn't get source code line geometry. Is the loaded image massive?");
+                        }
+                        var textLeft = geometry.Bounds.Left;
+                        var textBottom = line.TextBottom;
+                        Canvas.SetLeft(image, textLeft);
+                        Canvas.SetTop(image, textBottom);
+
+                        // Add image to editor view
+                        try
+                        {
+                            _layer.RemoveAdornment(image);
+                            _layer.AddAdornment(AdornmentPositioningBehavior.TextRelative, line.Extent, null, image, null);
+                        }
+                        catch (Exception ex)
+                        {
+                            // No expected exceptions, so tell user something is wrong.
+                            ExceptionHandler.Notify(ex, true);
+                        }
+                    }
+                    else
+                    {
+                        if (Images.ContainsKey(lineNumber))
+                        {
+                            Images.Remove(lineNumber);
+                        }
+
+                        _errorTags.Add(new TagSpan<ErrorTag>(span, loadingMessage == null ?
+                            new ErrorTag("No image set", "No image set") :
+                            new ErrorTag("Trouble loading image", loadingMessage)));
+                    }
+                }
+                if (parsedImgData.Name == "snd" || parsedImgData.Name == "sound")
+                {
+                    if (test) System.IO.File.AppendAllText("C:\\tmp\\imagecomment.log", "\nSND:" + parsedImgData.Url);
+                    if (soundPlayerData == null)
+                    {
+                        try
+                        {
+                            if (parsedImgData.Start >= 0.0)
+                            {
+                                if (test) System.IO.File.AppendAllText("C:\\tmp\\imagecomment.log", "\nSNDFILE:" + parsedImgData.Url);
+                                Play(parsedImgData.Url);
+                                PlayPosition((float)parsedImgData.Start);
+                                SetVolume((float)parsedImgData.Volume);
+                                soundPlayerData = parsedImgData.clone();
+                            }
+                        }
+                        catch (Exception e)
+                        {
+                            if (test) System.IO.File.AppendAllText("C:\\tmp\\imagecomment.log", "\nSNDERR:" + e.Message);
+                            Stop();
+                            soundPlayerData = null;
+                        }
+                    }
+                    else
+                    {
+                        if (soundPlayerData.Url != parsedImgData.Url)
+                        {
+                            try
+                            {
+                                Stop();
+                                soundPlayerData = null;
+                                Play(parsedImgData.Url);
+                                PlayPosition((float)parsedImgData.Start);
+                                SetVolume((float)parsedImgData.Volume);
+                                soundPlayerData = parsedImgData.clone();
+                            }
+                            catch (Exception e) { }
+                        }
+
+                        if (soundPlayerData.Volume != parsedImgData.Volume)
+                        {
+                            soundPlayerData.Volume = parsedImgData.Volume;
+                            SetVolume((float)parsedImgData.Volume);                            
+                        }
+                        if (soundPlayerData.Start != parsedImgData.Start)
+                        {
+                            soundPlayerData.Start = parsedImgData.Start;
+                            if (parsedImgData.Start < 0)
+                            {
+                                Stop();
+                                soundPlayerData = null;
+                            }
+                            else { 
+                                PlayPosition((float)parsedImgData.Start);
+                            }
+                        }
+                    }
                 }
             }
             else
@@ -247,5 +322,33 @@ namespace LM.ImageComments.EditorComponent
         }
 
         #endregion
+
+        public void Play(string filename)
+        {
+            soundPlayer = new MediaPlayer();
+            soundPlayer.Open(new Uri(filename));
+            soundPlayer.Play();
+        }
+        public void SetVolume(float volume)
+        {
+            // MediaPlayer volume is a float value between 0 and 1.
+            soundPlayer.Volume = volume;            
+        }
+        public void Stop()
+        {
+            if (soundPlayer != null)
+            {
+                soundPlayer.Stop();
+            }
+        }
+        public void PlayPosition(float sec)
+        {
+            if (soundPlayer != null)
+            {
+                soundPlayer.Position=new TimeSpan( (long)Math.Round(10000000*sec) ) ;
+            }
+        }
+
+
     }
 }
